@@ -92,6 +92,38 @@ class TW_GridCoordArrayBucketsManager<Class T> : TW_GridManagerBase
 		return HasCoord(x, y);
 	}
 	
+	int GetNeighborsAroundPosition(vector position, notnull out array<ref TW_GridCoordArrayBuckets<T>> items, int radius = -1, bool includeCenter = true)
+	{
+		if(radius <= 0)
+			radius = GetDistanceInChunks();
+		
+		int x, y;
+		TW_GridUtils.ToGrid(position, x, y, GetSizeInMeters());
+		
+		int leftBounds = x - radius;
+		int rightBounds = x + radius;
+		int lowerBounds = y - radius;
+		int upperBounds = y + radius;
+		
+		int count = 0;
+		for(int gridX = leftBounds; gridX <= rightBounds; gridX++)
+		{
+			for(int gridY = lowerBounds; gridY <= upperBounds; gridY++)
+			{
+				if(gridX == x && gridY == y && !includeCenter)
+					continue;
+				
+				if(HasCoord(gridX, gridY))
+				{
+					ref TW_GridCoordArrayBuckets<T> coord = GetCoord(gridX, gridY);
+					count += coord.GetData(items);
+				}				
+			}			
+		}
+		
+		return count;
+	}
+	
 	//! Retrieve coords around center
 	int GetNeighbors(notnull out array<ref TW_GridCoordArrayBuckets<T>> items, int x, int y, int radius = -1, bool includeCenter = true)
 	{
