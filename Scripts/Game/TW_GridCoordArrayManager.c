@@ -5,7 +5,7 @@ class TW_GridCoordArrayManager<Class T> : TW_GridManagerBase
 	
 	void TW_GridCoordArrayManager(GridSettings settings)
 	{
-		super(settings);
+		m_GridSettings = settings;
 	}
 	
 	TW_GridCoordArray<T> GetCoord(int x, int y)
@@ -226,7 +226,7 @@ class TW_GridCoordArrayManager<Class T> : TW_GridManagerBase
 		return totalCount;
 	}	
 	
-	int GetNeighborsAroundPosition(vector position, notnull out array<ref TW_GridCoordArray<T>> items, int radius = -1, bool includeCenter = true)
+	int GetNeighborsAroundPosition(vector position, notnull out array<T>> items, int radius = -1, bool includeCenter = true)
 	{
 		if(radius <= 0)
 			radius = GetDistanceInChunks();
@@ -289,5 +289,5 @@ class TW_GridCoordArrayManager<Class T> : TW_GridManagerBase
 				count += value.GetData(items);
 		
 		return count;
-	}	
+	}
 };

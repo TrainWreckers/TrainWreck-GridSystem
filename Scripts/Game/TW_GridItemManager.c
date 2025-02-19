@@ -1,13 +1,19 @@
 class TW_GridItemManager<Class T> : TW_GridManagerBase
 {
-	private ref map<int, ref map<int, TW_GridCoordItem<T>>> grid = new map<int, ref map<int, ref TW_GridCoordItem<T>>>();
+	private ref map<int, ref map<int, ref TW_GridCoordItem<T>>> grid = new map<int, ref map<int, ref TW_GridCoordItem<T>>>();
+	private int GridSize;
+	
+	// Coordinates that are currently active
+	private ref set<string> activeCoords = new set<string>();
+	
+	private int pointerIndex = -1;
+	private int activeCoordsCount = 0;
 	
 	void TW_GridItemManager(GridSettings settings)
 	{
-		super(settings);
+		m_GridSettings = settings;
 	}
 	
-	//! Retrieve grid coordinate
 	TW_GridCoordItem<T> GetCoord(int x, int y)
 	{
 		if(!HasCoord(x, y))
@@ -23,7 +29,7 @@ class TW_GridItemManager<Class T> : TW_GridManagerBase
 		int x, y;
 		foreach(string coord : coords)
 		{
-			TW_GridUtils.FromGridString(coord, x, y);
+			TW_Util.FromGridString(coord, x, y);
 			
 			if(!HasCoord(x, y))
 				continue;
@@ -32,15 +38,29 @@ class TW_GridItemManager<Class T> : TW_GridManagerBase
 			sub.Remove(y);
 			
 			if(sub.Count() <= 0)
-				sub.Remove(x);			
+				sub.Remove(x);
 		}
 	}
 	
-	//! Remove an item by world position
 	void RemoveByWorld(vector position, T item)
 	{
 		int x, y;
-		TW_GridUtils.ToGrid(position, x, y, GetSizeInMeters());
+		TW_Util.ToGrid(position, x, y, GridSize);
+		
+		
+		if(!HasCoord(x, y))
+			return;
+		
+		ref TW_GridCoordItem<T> coord = GetCoord(x, y);
+		
+		coord.SetItem(item);
+	}
+	
+	//! Try to insert item via world position
+	void InsertByWorld(vector position, T item)
+	{
+		int x, y;
+		TW_Util.ToGrid(position, x, y, GridSize);
 		
 		ref TW_GridCoordItem<T> coord;
 		
@@ -60,9 +80,7 @@ class TW_GridItemManager<Class T> : TW_GridManagerBase
 	void RemoveCoord(vector position)
 	{
 		int x, y;
-		TW_GridUtils.ToGrid(position, x, y, GetSizeInMeters());
-		
-		ref TW_GridCoordItem<T> coord;
+		TW_Util.ToGrid(position, x, y, GridSize);
 		
 		if(!HasCoord(x, y))
 			return;
@@ -74,45 +92,23 @@ class TW_GridItemManager<Class T> : TW_GridManagerBase
 			sub.Remove(x);
 	}
 	
-	//! Does this manager have designated coordinate
+	//! Does the grid have coordinate
 	bool HasCoord(int x, int y)
 	{
 		if(!grid.Contains(x))
 			return false;
 		
 		map<int, ref TW_GridCoordItem<T>> sub = grid.Get(x);
+
 		return sub.Contains(y);
 	}
 	
-	//! Is the world position associated with grid coordinate within this manager
 	bool HasPosition(vector worldPosition)
 	{
 		int x, y;
-		TW_GridUtils.ToGrid(worldPosition, x, y, GetSizeInMeters());
+		TW_Util.ToGrid(worldPosition, x, y, GridSize);
 		
-		return HasCoord(x, y);
-	}
-	
-	//! Insert item via world position
-	void InsertItem(vector position, T item)
-	{
-		int x, y;
-		TW_GridUtils.ToGrid(position, x, y, GetSizeInMeters());
-		
-		ref TW_GridCoordItem<T> coord = new TW_GridCoordItem<T>(x, y, item);
-		
-		if(!grid.Contains(x))
-		{
-			ref map<int, ref TW_GridCoordItem<T>> sub = new map<int, ref TW_GridCoordItem<T>>();
-			sub.Insert(y, coord);
-			grid.Insert(x, sub);
-		}
-		
-		if(!grid.Get(y).Contains(x))
-		{
-			ref map<int, ref TW_GridCoordItem<T>> sub = grid.Get(x);
-			sub.Insert(y, coord);
-		}
+		return HasCoord(x,y);
 	}
 	
 	void InsertCoord(TW_GridCoordItem<T> coord)
@@ -125,6 +121,7 @@ class TW_GridItemManager<Class T> : TW_GridManagerBase
 			grid.Insert(coord.x, sub);
 		}
 		
+		// IF X but no Y -- insert y and coord
 		if(!grid.Get(coord.x).Contains(coord.y))
 		{
 			ref map<int, ref TW_GridCoordItem<T>> sub = grid.Get(coord.x);
@@ -132,7 +129,7 @@ class TW_GridItemManager<Class T> : TW_GridManagerBase
 		}
 	}
 	
-	int GetNeighborsAroundPosition(vector position, notnull out array<ref TW_GridCoordItem<T>> items, int radius = -1, bool includeCenter = true)
+	int GetNeighborsAroundPosition(vector position, notnull out array<T> items, int radius = -1, bool includeCenter = true)
 	{
 		if(radius <= 0)
 			radius = GetDistanceInChunks();
@@ -156,7 +153,12 @@ class TW_GridItemManager<Class T> : TW_GridManagerBase
 				if(HasCoord(gridX, gridY))
 				{
 					ref TW_GridCoordItem<T> coord = GetCoord(gridX, gridY);
-					count += coord.GetData(items);
+					
+					if(coord.GetItem())
+					{
+						items.Insert(coord.GetItem());
+						count++;
+					}					
 				}				
 			}			
 		}

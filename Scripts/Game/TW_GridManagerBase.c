@@ -1,17 +1,11 @@
 class TW_GridManagerBase
 {
-	protected GridSettings m_GridSettings;
-	
+	protected ref GridSettings m_GridSettings;
 	
 	private ref ScriptInvoker<ref GridSettings> m_OnGridSettingsChanged = new ScriptInvoker<ref GridSettings>();
 	
 	//! Allow being notified of when grid settings changed
 	ScriptInvoker<ref GridSettings> GetOnGridSettingsChanged() { return m_OnGridSettingsChanged; }
-	
-	void TW_GridManagerBase(GridSettings settings)
-	{
-		m_GridSettings = settings;
-	}
 	
 	void ChangeSettings(GridSettings settings)
 	{

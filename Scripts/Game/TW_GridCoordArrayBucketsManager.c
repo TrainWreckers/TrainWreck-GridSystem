@@ -5,7 +5,7 @@ class TW_GridCoordArrayBucketsManager<Class T> : TW_GridManagerBase
 	
 	void TW_GridCoordArrayBucketsManager(GridSettings settings)
 	{
-		super(settings);
+		m_GridSettings = settings;
 	}
 	
 	//! Retrieve bucket of items at coordinate
@@ -92,7 +92,7 @@ class TW_GridCoordArrayBucketsManager<Class T> : TW_GridManagerBase
 		return HasCoord(x, y);
 	}
 	
-	int GetNeighborsAroundPosition(vector position, notnull out array<ref TW_GridCoordArrayBuckets<T>> items, int radius = -1, bool includeCenter = true)
+	int GetNeighborsAroundPosition(vector position, notnull out array<T> items, int radius = -1, bool includeCenter = true)
 	{
 		if(radius <= 0)
 			radius = GetDistanceInChunks();
